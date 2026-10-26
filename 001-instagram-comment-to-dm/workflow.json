@@ -1,0 +1,600 @@
+{
+  "name": "WK #001 · Instagram Comment → DM",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 1
+            }
+          ]
+        }
+      },
+      "id": "5b0d7d1e-0001-4a10-9a01-000000000001",
+      "name": "Every minute",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c0000001-0000-4000-8000-000000000001",
+              "name": "API_VERSION",
+              "value": "v25.0",
+              "type": "string"
+            },
+            {
+              "id": "c0000001-0000-4000-8000-000000000002",
+              "name": "MEDIA_ID",
+              "value": "PASTE_YOUR_REEL_MEDIA_ID",
+              "type": "string"
+            },
+            {
+              "id": "c0000001-0000-4000-8000-000000000004",
+              "name": "MY_USERNAME",
+              "value": "your_instagram_username",
+              "type": "string"
+            },
+            {
+              "id": "c0000001-0000-4000-8000-000000000006",
+              "name": "REPLY_TEXT",
+              "value": "Sent! 📩 Check your DMs (or Requests if you don't follow me yet)",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5b0d7d1e-0002-4a10-9a01-000000000002",
+      "name": "Config",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        0
+      ],
+      "notes": "Edit these 4 values. Links live in the green \"Link:\" nodes.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://graph.instagram.com/' + $json.API_VERSION + '/' + $json.MEDIA_ID + '/comments' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "fields",
+              "value": "id,text,username,timestamp"
+            },
+            {
+              "name": "limit",
+              "value": "50"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5b0d7d1e-0003-4a10-9a01-000000000003",
+      "name": "Get comments",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        0
+      ],
+      "notes": "First page only (50 comments per minute). Add pagination if one post gets more than that.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "data",
+        "options": {}
+      },
+      "id": "5b0d7d1e-0004-4a10-9a01-000000000004",
+      "name": "One item per comment",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        660,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "removeItemsSeenInPreviousExecutions",
+        "logic": "removeItemsWithAlreadySeenKeyValues",
+        "dedupeValue": "={{ $json.id }}",
+        "options": {}
+      },
+      "id": "5b0d7d1e-0005-4a10-9a01-000000000005",
+      "name": "Only new comments",
+      "type": "n8n-nodes-base.removeDuplicates",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ],
+      "notes": "Without this, the same people get processed every minute.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "a0000001-0000-4000-8000-000000000002",
+              "leftValue": "={{ $json.username }}",
+              "rightValue": "={{ $('Config').first().json.MY_USERNAME }}",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "5b0d7d1e-0006-4a10-9a01-000000000006",
+      "name": "Not me?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1100,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "d0000001-0000-4000-8000-000000000001",
+                    "leftValue": "={{ $json.text }}",
+                    "rightValue": "guide",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "guide"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "d0000001-0000-4000-8000-000000000002",
+                    "leftValue": "={{ $json.text }}",
+                    "rightValue": "price",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "price"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5b0d7d1e-0013-4a10-9a01-000000000013",
+      "name": "Which keyword?",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        1320,
+        0
+      ],
+      "notes": "New offer? Add a rule here + one Link node.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e0000004-0000-4000-8000-000000000001",
+              "name": "link",
+              "value": "https://example.com/checklist",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "5b0d7d1e-0014-4a10-9a01-000000000014",
+      "name": "Link: checklist",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1540,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e0000005-0000-4000-8000-000000000001",
+              "name": "link",
+              "value": "https://example.com/pricing",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "5b0d7d1e-0015-4a10-9a01-000000000015",
+      "name": "Link: pricing",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1540,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://graph.instagram.com/' + $('Config').first().json.API_VERSION + '/me/messages' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"recipient\": { \"comment_id\": \"{{ $json.id }}\" },\n  \"message\": { \"text\": \"Hey @{{ $json.username }}! Here's what you asked for: {{ $json.link }}\" }\n}",
+        "options": {}
+      },
+      "id": "5b0d7d1e-0007-4a10-9a01-000000000007",
+      "name": "Send private DM",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1760,
+        0
+      ],
+      "notes": "Private reply: 1 per comment, within 7 days. Lands in Requests if they don't follow you.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://graph.instagram.com/' + $('Config').first().json.API_VERSION + '/' + $('Not me?').item.json.id + '/replies' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"message\": \"{{ $('Config').first().json.REPLY_TEXT }}\"\n}",
+        "options": {}
+      },
+      "id": "5b0d7d1e-0008-4a10-9a01-000000000008",
+      "name": "Public reply",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1980,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b0000001-0000-4000-8000-000000000001",
+              "name": "Username",
+              "value": "={{ $('Not me?').item.json.username }}",
+              "type": "string"
+            },
+            {
+              "id": "b0000001-0000-4000-8000-000000000002",
+              "name": "Comment",
+              "value": "={{ $('Not me?').item.json.text }}",
+              "type": "string"
+            },
+            {
+              "id": "b0000001-0000-4000-8000-000000000003",
+              "name": "Time",
+              "value": "={{ $('Not me?').item.json.timestamp }}",
+              "type": "string"
+            },
+            {
+              "id": "b0000001-0000-4000-8000-000000000004",
+              "name": "Post",
+              "value": "={{ $('Config').first().json.MEDIA_ID }}",
+              "type": "string"
+            },
+            {
+              "id": "b0000001-0000-4000-8000-000000000005",
+              "name": "Comment ID",
+              "value": "={{ $('Not me?').item.json.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5b0d7d1e-0009-4a10-9a01-000000000009",
+      "name": "Lead row",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2200,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Leads",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "5b0d7d1e-0010-4a10-9a01-000000000010",
+      "name": "Log lead",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2420,
+        0
+      ],
+      "notes": "Sheet tab \"Leads\" with header row: Username | Comment | Time | Post | Comment ID",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {},
+      "id": "5b0d7d1e-0011-4a10-9a01-000000000011",
+      "name": "Run once: list my posts",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://graph.instagram.com/v25.0/me/media",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "fields",
+              "value": "id,caption,permalink,timestamp"
+            },
+            {
+              "name": "limit",
+              "value": "10"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5b0d7d1e-0012-4a10-9a01-000000000012",
+      "name": "List my posts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        300
+      ],
+      "notes": "Run manually. Copy the id of your test reel into Config → MEDIA_ID.",
+      "notesInFlow": true
+    }
+  ],
+  "connections": {
+    "Every minute": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config": {
+      "main": [
+        [
+          {
+            "node": "Get comments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get comments": {
+      "main": [
+        [
+          {
+            "node": "One item per comment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "One item per comment": {
+      "main": [
+        [
+          {
+            "node": "Only new comments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Only new comments": {
+      "main": [
+        [
+          {
+            "node": "Not me?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send private DM": {
+      "main": [
+        [
+          {
+            "node": "Public reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Public reply": {
+      "main": [
+        [
+          {
+            "node": "Lead row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lead row": {
+      "main": [
+        [
+          {
+            "node": "Log lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run once: list my posts": {
+      "main": [
+        [
+          {
+            "node": "List my posts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Not me?": {
+      "main": [
+        [
+          {
+            "node": "Which keyword?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Which keyword?": {
+      "main": [
+        [
+          {
+            "node": "Link: checklist",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Link: pricing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Link: checklist": {
+      "main": [
+        [
+          {
+            "node": "Send private DM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Link: pricing": {
+      "main": [
+        [
+          {
+            "node": "Send private DM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}
