@@ -2,7 +2,7 @@
 
 One command in Claude Code: `/find-leads dentists Austin TX`. It finds local businesses on OpenStreetMap, reads the emails and phone numbers they publish on their own websites, checks every domain for a mail server and saves a CSV ready for Google Sheets or Instantly.
 
-📺 Video walkthrough: [Claude Code Lead Generation: Free Local Leads](https://www.youtube.com/@workflowkitchen)
+📺 Video walkthrough: [Claude Code Lead Generation: Free Local Leads](https://youtu.be/jdH5VzuIxVA) (premieres Oct 30, 2026)
 
 $0 for data. No Google Maps scraping, no Places API, no LinkedIn, no Apollo.
 
