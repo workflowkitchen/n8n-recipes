@@ -1,0 +1,6 @@
+Customer,Type,Email,Phone,Notes
+Riverside Coffee Co.,Wholesale,orders@riverside-coffee.example.com,512-555-0142,"Weekly bread + pastry order, always pays within 10 days"
+Lamar Street Deli,Wholesale,ap@lamarstreetdeli.example.com,512-555-0177,"Weekly sourdough + rolls, usually pays 30+ days late"
+Eastside Yoga Studio,Wholesale,hello@eastsideyoga.example.com,512-555-0119,"Small weekly muffin order, always on time until now"
+Barton Creek Events,Catering,billing@bartoncreekevents.example.com,512-555-0163,"Event planner, 2-3 catering orders a month, pays ~20 days late"
+Hyde Park Book Club,Catering,events@hydeparkbooks.example.com,512-555-0188,"Monthly pastry trays, pays on time"
